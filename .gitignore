@@ -1,0 +1,7 @@
+# nunca subir segredos/internos
+*.pem
+*.key
+wa_config.json
+*server*.py
+NOTAS-*.md
+*-interna.html

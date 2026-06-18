@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZeroBobina — Apresentação interativa</title>
+<style>
+  :root{--verde:#34d399;--verde2:#10b981;--amarelo:#fbbf24;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#fff;}
+  #stage{position:fixed;inset:0;cursor:pointer;background:#000;}
+  video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  /* camada dos cards */
+  .layer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(2,6,18,.55);backdrop-filter:blur(2px);z-index:10;}
+  .layer.on{display:flex;animation:fade .5s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .card{width:min(78vw,760px);background:linear-gradient(180deg,#0a1322,#050a16);border:2px solid var(--verde);
+    border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 50px rgba(52,211,153,.15);padding:4vh 4vw;text-align:center;}
+  .logo{height:42px;margin-bottom:16px;background:#fff;padding:8px 16px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .selo{display:inline-block;background:var(--amarelo);color:#1e293b;font-weight:800;font-size:clamp(12px,1.5vw,16px);
+    padding:6px 18px;border-radius:30px;letter-spacing:1px;margin-bottom:14px;}
+  .card h1{font-size:clamp(24px,3.6vw,44px);font-weight:900;line-height:1.12;}
+  .card h1 .x{color:#f87171;} .card h1 .g{color:var(--verde);}
+  .card p{font-size:clamp(14px,1.9vw,21px);color:#cbd5e1;font-weight:600;margin-top:12px;line-height:1.45;}
+  .card p b{color:#fff;} .card .green{color:var(--verde);font-weight:800;}
+  .hint{margin-top:20px;display:inline-block;background:rgba(16,185,129,.95);color:#04130d;font-weight:800;
+    padding:12px 28px;border-radius:40px;font-size:clamp(13px,1.7vw,18px);animation:bob 1.6s infinite;}
+  @keyframes bob{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  /* 2 colunas editaveis */
+  .cols{display:flex;gap:3vw;justify-content:center;margin:2vh 0;}
+  .col{flex:1;background:rgba(255,255,255,.05);border:1px solid #1f2a3a;border-radius:16px;padding:3vh 2vw;}
+  .col .lab{font-size:clamp(13px,1.6vw,17px);color:#94a3b8;font-weight:700;margin-bottom:10px;}
+  .col .inwrap{font-size:clamp(30px,5vw,56px);font-weight:900;color:#fff;}
+  .col input{background:transparent;border:none;border-bottom:3px dashed var(--amarelo);color:#fff;
+    font-size:clamp(30px,5vw,56px);font-weight:900;width:3.6em;text-align:center;outline:none;}
+  .col input:focus{border-bottom-color:var(--verde);}
+  .col .cifra{font-size:.5em;vertical-align:top;opacity:.8;margin-right:4px}
+  /* device showcase */
+  .device{background:#0d1117;border-radius:18px;padding:14px;box-shadow:0 30px 70px rgba(0,0,0,.8),0 0 0 2px #2a3340;}
+  .device.small iframe{width:min(70vw,520px);height:min(54vh,390px);border:0;border-radius:8px;background:#000;display:block;}
+  .device.big iframe{width:min(82vw,860px);height:min(56vh,470px);border:0;border-radius:10px;background:#000;display:block;}
+  .devwrap{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;}
+  .devwrap .t{font-size:clamp(20px,2.8vw,34px);font-weight:800;}
+  .devwrap .t .g{color:var(--verde);}
+  .devwrap .s{font-size:clamp(13px,1.6vw,18px);color:#cbd5e1;margin-top:-6px;}
+  .liveb{display:inline-flex;align-items:center;gap:7px;background:rgba(239,68,68,.2);border:1px solid #ef4444;
+    border-radius:30px;padding:3px 13px;font-size:12px;font-weight:800;color:#fca5a5;}
+  .liveb .dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  /* economia: abas */
+  .tabs{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
+  .tab{background:rgba(255,255,255,.06);border:1px solid #1f2a3a;color:#94a3b8;font-weight:800;border-radius:30px;
+    padding:9px 20px;cursor:pointer;font-size:clamp(12px,1.5vw,16px);}
+  .tab.act{background:var(--verde);color:#04130d;border-color:var(--verde);}
+  .tab.dis{opacity:.32;cursor:not-allowed;pointer-events:none;filter:grayscale(1);}
+  .pane{display:none;} .pane.on{display:block;animation:fade .35s;}
+  .big{font-size:clamp(34px,6vw,64px);font-weight:900;line-height:1;}
+  .big.green{color:var(--verde);} .row{display:flex;justify-content:space-between;align-items:center;
+    padding:12px 4px;border-bottom:1px solid #1b2434;font-size:clamp(14px,1.9vw,21px);font-weight:700;}
+  .row .v{font-weight:900;} .row .v.green{color:var(--verde);} .row .v.red{color:#f87171;}
+  .impgrid{display:flex;gap:2.4vw;justify-content:center;margin:1vh 0;}
+  .impcard{flex:1;background:rgba(255,255,255,.05);border:1px solid #1f2a3a;border-radius:14px;padding:12px;text-align:center;}
+  .impcard img{width:100%;max-width:300px;border-radius:10px;display:block;margin:0 auto 10px;}
+  .impcard .in{font-weight:800;font-size:clamp(14px,1.9vw,20px);}
+  .impcard .ip{color:var(--verde);font-weight:900;font-size:clamp(16px,2.2vw,24px);margin-top:3px;}
+  .impcard .ic{color:#94a3b8;font-size:clamp(11px,1.4vw,15px);margin-top:3px;} .impcard .ic b{color:var(--amarelo);}
+  .impcard .it{color:#cbd5e1;font-size:clamp(12px,1.5vw,16px);margin-top:5px;} .impcard .it b{color:#fff;}
+  /* menu lateral de atalhos */
+  .navmenu{position:fixed;right:10px;bottom:10px;top:auto;transform:none;display:none;flex-direction:column;gap:5px;z-index:40;}
+  .navmenu.on{display:flex;}
+  .navmenu button{background:rgba(2,6,18,.72);border:1px solid var(--verde);color:#cbd5e1;font-weight:700;border-radius:20px;
+    padding:5px 11px;cursor:pointer;font-size:11px;line-height:1.1;backdrop-filter:blur(3px);white-space:nowrap;text-align:left;transition:.2s;opacity:.82;}
+  .navmenu button:hover{background:var(--verde);color:#04130d;opacity:1;transform:translateX(-3px);}
+  /* intro */
+  #intro{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;background:radial-gradient(circle at 50% 40%,#10241d,#020617 78%);text-align:center;}
+  #intro .logo{height:64px;margin:0;padding:14px 26px}
+  .play{margin-top:10px;background:linear-gradient(135deg,var(--verde),#047857);color:#fff;border:none;border-radius:40px;
+    font-size:clamp(16px,2vw,22px);font-weight:800;padding:16px 40px;cursor:pointer;box-shadow:0 12px 30px rgba(16,185,129,.4);}
+  .tagi{font-size:clamp(15px,2.2vw,24px);color:#cbd5e1;font-weight:600;max-width:80%}
+  .tag{position:fixed;top:12px;left:14px;font-size:12px;color:rgba(255,255,255,.4);z-index:50;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="tag">ZeroBobina · clique para continuar</div>
+  <div class="navmenu" id="navmenu">
+    <button data-go="lei">📜 A Lei</button>
+    <button data-go="conta">✏️ Conta do açougue</button>
+    <button data-go="tel">📱 A telinha</button>
+    <button data-go="tab">📺 O tablet</button>
+    <button data-go="eco">🚀 Economia & receita</button>
+  </div>
+  <video id="v" src="fpv-principal.mp4" playsinline preload="auto"></video>
+
+  <!-- 1) LEI -->
+  <div class="layer" id="L_lei">
+    <div class="card">
+      <img class="logo" src="logo.png" alt="ZeroBobina">
+      <div class="selo">📜 MUDOU A LEI · 2026</div>
+      <h1>Imprimir o cupom <span class="x">acabou.</span></h1>
+      <p>O SAT acabou em 01/01/2026. Agora vale a <b>NFC-e</b> — 100% digital, no celular do cliente.
+         <span class="green">Sem bobina. Sem papel.</span></p>
+      <div class="hint">👆 clique para continuar</div>
+    </div>
+  </div>
+
+  <!-- 2) INPUTS editaveis -->
+  <div class="layer" id="L_in">
+    <div class="card">
+      <img class="logo" src="logo.png" alt="">
+      <div class="selo">✏️ A CONTA DESTE AÇOUGUE</div>
+      <h1>Vamos fazer a <span class="g">sua conta.</span></h1>
+      <div class="cols">
+        <div class="col"><div class="lab">Gasto de bobina por mês</div>
+          <div class="inwrap"><span class="cifra">R$</span><input id="inBobina" type="number" value="480" min="0"></div></div>
+        <div class="col"><div class="lab">Quantos caixas?</div>
+          <div class="inwrap"><input id="inCaixas" type="number" value="4" min="1"></div></div>
+      </div>
+      <div class="hint">👆 preencha e clique para continuar</div>
+    </div>
+  </div>
+
+  <!-- 3) TELINHA -->
+  <div class="layer" id="L_tel">
+    <div class="devwrap">
+      <div class="t">Nosso 1º modelo · <span class="g">a telinha</span> &nbsp;<span class="liveb"><span class="dot"></span>AO VIVO</span></div>
+      <div class="device small"><iframe id="if1" data-src="../mvp-telinha/telinha.html#clean"></iframe></div>
+      <div class="s">cupom no celular + cashback no WhatsApp + propaganda na tela</div>
+      <div class="hint">👆 clique para continuar</div>
+    </div>
+  </div>
+
+  <!-- 4) TABLET -->
+  <div class="layer" id="L_tab">
+    <div class="devwrap">
+      <div class="t">O <span class="g">tablet</span> · tela grande + propaganda &nbsp;<span class="liveb"><span class="dot"></span>AO VIVO</span></div>
+      <div class="device big"><iframe id="if2" data-src="../mvp-telinha/tablet.html#clean"></iframe></div>
+      <div class="s">mesmo sistema, tela cheia — vende enquanto cobra</div>
+      <div class="hint">👆 clique para o resultado final</div>
+    </div>
+  </div>
+
+  <!-- 5) ECONOMIA (abas) -->
+  <div class="layer" id="L_eco">
+    <div class="card">
+      <img class="logo" src="logo.png" alt="">
+      <div class="tabs">
+        <div class="tab act" id="tabEco">💰 Economia / mês</div>
+        <div class="tab" id="tabImp">🛠️ Implantação</div>
+        <div class="tab dis" id="tabEsc" title="conteúdo interno — desativado">📈 Escala &amp; receita</div>
+      </div>
+      <div class="pane on" id="paneEco">
+        <div class="row"><span>Gasto de bobina hoje</span><span class="v" id="eGasto">R$ 480</span></div>
+        <div class="row"><span>Economia (90% — 10% fica p/ outros usos)</span><span class="v green" id="eEcon">R$ 432</span></div>
+        <div class="row"><span>Mensalidade ZeroBobina (<span id="eCx">4</span> caixas)</span><span class="v red" id="eMens">R$ 156</span></div>
+        <div class="row" style="border:0;margin-top:6px"><span style="font-size:1.1em">Economia líquida</span>
+          <span class="big green" id="eLiq">R$ 276</span></div>
+        <p style="margin-top:6px">por mês — <span class="green" id="eAno">R$ 3.312/ano</span> · e ainda vende pela tela.</p>
+      </div>
+      <div class="pane" id="paneImp">
+        <div class="impgrid">
+          <div class="impcard">
+            <img src="img-telinha.png" alt="telinha">
+            <div class="in">Telinha (pequena)</div>
+            <div class="ip">R$ <span id="pT">990</span>/caixa</div>
+            <div class="ic">custo R$ <span id="cT">250</span> · margem <b id="mT">R$ 740</b></div>
+            <div class="it"><span id="iCx">4</span> caixas = <b id="iTel">R$ 3.960</b></div>
+          </div>
+          <div class="impcard">
+            <img src="img-tablet.png" alt="tablet">
+            <div class="in">Tablet (premium)</div>
+            <div class="ip">R$ <span id="pB">2.000</span>/caixa</div>
+            <div class="ic">custo R$ <span id="cB">1.000</span> · margem <b id="mB">R$ 1.000</b></div>
+            <div class="it"><span id="iCx2">4</span> caixas = <b id="iTab">R$ 8.000</b></div>
+          </div>
+        </div>
+        <p style="margin-top:10px">Investimento único de equipamento. A mensalidade já se paga com a economia da bobina.</p>
+      </div>
+      <div class="pane" id="paneEsc"><!-- conteúdo interno (escala & receita) removido da versão publicada --></div>
+      <div class="hint" id="ecoHint">↺ clique fora para ver de novo</div>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div id="intro">
+    <img class="logo" src="logo.png" alt="ZeroBobina">
+    <div class="tagi">O fim da bobina no balcão. Apresentação interativa — você clica, o vídeo segue.</div>
+    <button class="play" id="play">▶ Iniciar</button>
+    <div style="font-size:13px;color:#64748b">dica: F11 pra tela cheia</div>
+  </div>
+</div>
+
+<script>
+  // ---- config (ajustável) ----
+  const PRECO_CAIXA=49;     // mensalidade R$/caixa/mês
+  const PRECO_MIDIA=19.9;   // add-on de mídia (IA gera anúncio) R$/caixa/mês
+  const IMPL_TELINHA=990;   // R$/caixa equipamento telinha
+  const IMPL_TABLET=2000;   // R$/caixa equipamento tablet (venda)
+  const CUSTO_TELINHA=250;  // custo nosso da telinha
+  const CUSTO_TABLET=1000;  // custo nosso do tablet
+  const PCT=0.90;           // 90% da bobina economizada
+
+  const $=id=>document.getElementById(id);
+  const v=$('v');
+  const fmt=n=>Number(Math.round(n)).toLocaleString('pt-BR');
+  // stops: tempo do vídeo -> id da camada
+  const STOPS=[{t:5,id:'L_lei'},{t:7,id:'L_in'},{t:16,id:'L_tel'},{t:26,id:'L_tab'}];
+  let next=0, showing=null, started=false;
+
+  function loadFrames(layer){ document.querySelectorAll('#'+layer+' iframe[data-src]').forEach(f=>{if(!f.src)f.src=f.getAttribute('data-src');}); }
+  function startIframe(layer){ document.querySelectorAll('#'+layer+' iframe').forEach(f=>{try{if(f.contentWindow&&f.contentWindow.start)f.contentWindow.start();}catch(e){}}); }
+
+  function showLayer(id){
+    showing=id; v.pause(); const el=$(id); el.classList.add('on');
+    if(id==='L_tel'||id==='L_tab'){ loadFrames(id); /* NÃO dispara pagamento: fica na propaganda, o Lucas clica na tela do aparelho */ }
+    if(id==='L_eco') calcEco();
+  }
+  function hideLayer(){ if(showing){ $(showing).classList.remove('on'); showing=null; } }
+
+  v.addEventListener('timeupdate',()=>{
+    if(showing) return;
+    if(next<STOPS.length && v.currentTime>=STOPS[next].t){ showLayer(STOPS[next].id); next++; }
+  });
+  v.addEventListener('ended',()=>{ if(!showing) showLayer('L_eco'); });
+
+  function advance(){
+    if(!showing) return;
+    if(showing==='L_eco'){ restart(); return; }
+    hideLayer(); v.play().catch(()=>{});
+  }
+  function calcEco(){
+    const g=Math.max(0,parseInt($('inBobina').value||'0',10));
+    const cx=Math.max(1,parseInt($('inCaixas').value||'1',10));
+    const econ=g*PCT, mens=cx*PRECO_CAIXA, liq=econ-mens;
+    $('eGasto').textContent='R$ '+fmt(g); $('eEcon').textContent='R$ '+fmt(econ);
+    $('eCx').textContent=cx; $('eMens').textContent='R$ '+fmt(mens);
+    $('eLiq').textContent='R$ '+fmt(liq); $('eAno').textContent='R$ '+fmt(liq*12)+'/ano';
+    $('iCx').textContent=cx; $('iCx2').textContent=cx;
+    $('iTel').textContent='R$ '+fmt(cx*IMPL_TELINHA); $('iTab').textContent='R$ '+fmt(cx*IMPL_TABLET);
+    $('pT').textContent=fmt(IMPL_TELINHA); $('pB').textContent=fmt(IMPL_TABLET);
+    $('cT').textContent=fmt(CUSTO_TELINHA); $('mT').textContent='R$ '+fmt(IMPL_TELINHA-CUSTO_TELINHA);
+    $('cB').textContent=fmt(CUSTO_TABLET); $('mB').textContent='R$ '+fmt(IMPL_TABLET-CUSTO_TABLET);
+  }
+  function start(){ $('intro').style.display='none'; started=true; next=0; v.currentTime=0; v.play().catch(()=>{}); $('navmenu').classList.add('on'); }
+  function restart(){ hideLayer(); next=0; start(); }
+
+  // abas economia (não avançam)
+  function setTab(t){['Eco','Imp','Esc'].forEach(k=>{$('tab'+k).classList.toggle('act',k===t);$('pane'+k).classList.toggle('on',k===t);});}
+  $('tabEco').onclick=e=>{e.stopPropagation();setTab('Eco');};
+  $('tabImp').onclick=e=>{e.stopPropagation();setTab('Imp');};
+  /* aba "Escala & receita" = conteúdo INTERNO, desativada pro cliente não ver (sem handler) */
+  // botões de atalho (pular pra qualquer parte)
+  const NAV={lei:['L_lei',5,1],conta:['L_in',7,2],tel:['L_tel',16,3],tab:['L_tab',26,4],eco:['L_eco',29,4]};
+  document.querySelectorAll('.navmenu button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    const n=NAV[b.getAttribute('data-go')];hideLayer();try{v.currentTime=n[1];}catch(err){}showLayer(n[0]);next=n[2];}));
+  // inputs não avançam
+  ['inBobina','inCaixas'].forEach(id=>$(id).addEventListener('click',e=>e.stopPropagation()));
+  $('play').onclick=e=>{e.stopPropagation();start();};
+  $('stage').addEventListener('click',()=>{ if(started) advance(); });
+</script>
+<script>
+/* ===== Tela de senha (só quando hospedado; local file:// abre direto) ===== */
+(function(){
+  if(location.protocol==='file:')return;
+  if(sessionStorage.getItem('zb_ok')==='1')return;
+  const HASH='27a2f73d170b22328d2502b36da23f5a9cf049ba322edf9dcec2d83c779819b9';
+  const g=document.createElement('div');
+  g.style.cssText='position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 40%,#10241d,#020617 80%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;text-align:center;padding:20px';
+  g.innerHTML='<img src="logo.png" style="height:52px;background:#fff;padding:10px 18px;border-radius:14px"><div style="font-size:18px;color:#cbd5e1;font-weight:600">Conteúdo privado — digite a senha</div><input id="zbgp" type="password" autocapitalize="none" autocomplete="off" placeholder="senha" style="font-size:20px;padding:12px 18px;border-radius:12px;border:2px solid #34d399;background:#0a1322;color:#fff;text-align:center;width:min(80vw,300px);outline:none"><button id="zbgb" style="background:linear-gradient(135deg,#34d399,#047857);color:#fff;border:none;border-radius:40px;font-size:18px;font-weight:800;padding:14px 34px;cursor:pointer">Entrar</button><div id="zbge" style="color:#f87171;font-weight:700;height:20px"></div>';
+  document.body.appendChild(g);
+  async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+  async function chk(){const h=await sha(document.getElementById('zbgp').value.trim().toLowerCase());if(h===HASH){sessionStorage.setItem('zb_ok','1');g.remove();}else{document.getElementById('zbge').textContent='senha errada';}}
+  document.getElementById('zbgb').onclick=chk;
+  document.getElementById('zbgp').addEventListener('keydown',e=>{if(e.key==='Enter')chk();});
+  setTimeout(()=>document.getElementById('zbgp').focus(),100);
+})();
+</script>
+</body>
+</html>

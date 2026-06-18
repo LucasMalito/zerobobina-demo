@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cupom Fiscal Digital — ZeroBobina</title>
+<style>
+  :root{--verde:#10b981;--verde-esc:#047857;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b1220;color:#0f172a;padding:16px;}
+  .card{max-width:480px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.4);}
+  .top{background:linear-gradient(135deg,var(--verde),var(--verde-esc));color:#fff;padding:22px 20px;text-align:center;}
+  .top .badge{font-size:13px;letter-spacing:1px;text-transform:uppercase;opacity:.9;}
+  .top h1{font-size:22px;margin-top:6px;}
+  .top .ok{margin-top:10px;font-size:15px;background:rgba(255,255,255,.18);display:inline-block;padding:6px 14px;border-radius:30px;}
+  .body{padding:20px;}
+  .loja{font-size:18px;font-weight:800;}
+  .muted{color:#64748b;font-size:13px;margin-top:2px;line-height:1.35;}
+  .sep{border:none;border-top:1px dashed #cbd5e1;margin:16px 0;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;color:#94a3b8;font-size:12px;text-transform:uppercase;padding-bottom:6px;}
+  td{padding:6px 0;border-bottom:1px solid #f1f5f9;}
+  td.r,th.r{text-align:right;}
+  .total{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:15px;}
+  .total b{font-size:26px;color:var(--verde-esc);}
+  .pgto{color:#64748b;font-size:14px;margin-top:6px;}
+  .chave{margin-top:16px;background:#f8fafc;border-radius:12px;padding:12px;font-size:12px;color:#475569;word-break:break-all;}
+  .chave .lbl{font-size:11px;text-transform:uppercase;color:#94a3b8;letter-spacing:.5px;}
+  .foot{text-align:center;color:#94a3b8;font-size:12px;padding:14px 20px 22px;}
+  .foot b{color:var(--verde-esc);}
+  .loading{color:#fff;text-align:center;padding:40px;}
+</style>
+</head>
+<body>
+  <div id="app" class="loading">Carregando cupom…</div>
+<script>
+const id=new URLSearchParams(location.search).get('id')||'0';
+const brl=n=>Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+fetch('/api/cupom?id='+id,{cache:'no-store'}).then(r=>r.json()).then(c=>{
+  if(!c||!c.seq){document.getElementById('app').innerHTML='<div class="loading">Cupom não encontrado.</div>';return;}
+  const itens=(c.itens||[]).map(i=>`<tr><td>${i.desc||''}</td><td class="r">${i.qtd||''}</td><td class="r">R$ ${brl(i.total||0)}</td></tr>`).join('');
+  document.getElementById('app').className='';
+  document.getElementById('app').innerHTML=`
+   <div class="card">
+     <div class="top">
+       <div class="badge">NFC-e · Cupom Fiscal Digital</div>
+       <h1>Sua nota chegou 🎉</h1>
+       <div class="ok">✓ Sem papel · válida na SEFAZ</div>
+     </div>
+     <div class="body">
+       <div class="loja">${c.loja||'Estabelecimento'}</div>
+       <div class="muted">${c.end||''}</div>
+       <div class="muted">CNPJ: ${c.cnpj||''}</div>
+       <hr class="sep">
+       <table><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Total</th></tr></thead>
+       <tbody>${itens||'<tr><td colspan=3 class=muted>—</td></tr>'}</tbody></table>
+       <div class="total"><span>Valor pago</span><b>R$ ${brl(c.total)}</b></div>
+       <div class="pgto">Forma de pagamento: ${c.forma||'—'}</div>
+       <div class="chave"><div class="lbl">Chave de acesso</div>${c.chave||'—'}</div>
+     </div>
+     <div class="foot">Entregue por <b>ZeroBobina</b> · cupom digital no seu celular</div>
+   </div>`;
+}).catch(()=>{document.getElementById('app').innerHTML='<div class="loading">Erro ao carregar.</div>';});
+</script>
+</body>
+</html>

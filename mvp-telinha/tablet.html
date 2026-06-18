@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ZeroBobina — Tablet (Redmi Pad 2)</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020617">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{--verde:#10b981;--verde-esc:#047857;--verde-claro:#34d399;--wpp:#25D366;--wpp-esc:#128C7E;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;background:#000;font-family:'Segoe UI',system-ui,sans-serif;}
+  #screen{position:fixed;inset:0;overflow:hidden;background:#020617;cursor:pointer;user-select:none;}
+  .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .35s ease;text-align:center;padding:4vh 4vw;}
+  .scene.active{opacity:1;pointer-events:auto;}
+
+  /* idle: propaganda em tela cheia + pílula whatsapp */
+  #idle{background:linear-gradient(135deg,#020617,#04231c,#020617);background-size:200% 200%;animation:gradMove 9s ease infinite;}
+  @keyframes gradMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .ad-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0;transition:opacity .45s ease;}
+  .ad-bg.on{opacity:1;}
+  /* marca Tennessee na transição (cobre o preto entre vídeos) */
+  .brand-card{position:absolute;inset:0;z-index:1;background:#5c0f13 url('tennessee-4k.png') center/contain no-repeat;opacity:0;transition:opacity .45s ease;pointer-events:none;}
+  .brand-card.show{opacity:1;}
+  /* marca d'água do logo, pequena no canto, só sobre o vídeo (some na logo cheia) */
+  .brand-mark{position:absolute;bottom:4vh;right:3vw;z-index:1;width:20vw;max-width:280px;height:auto;
+    opacity:.9;filter:drop-shadow(0 2px 10px rgba(0,0,0,.8));pointer-events:none;}
+  #idle::after{content:"";position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(2,6,23,.18),rgba(2,6,23,0) 30%,rgba(2,6,23,0) 58%,rgba(2,6,23,.75));}
+  .ad-tag{position:absolute;top:2vh;left:2.5vw;z-index:3;font-size:1.6vh;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase;}
+  .idle-logo{position:absolute;top:2vh;left:50%;transform:translateX(-50%);z-index:2;font-size:3.4vh;font-weight:800;color:#fff;letter-spacing:-1px;text-shadow:0 2px 12px rgba(0,0,0,.7);}
+  .idle-logo b{color:var(--verde-claro);}
+  .wpp-pill{position:absolute;bottom:7vh;left:50%;transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:1.4vh;
+    background:var(--wpp);color:#fff;font-size:2.6vh;font-weight:800;padding:1.8vh 3.2vh;border-radius:50px;cursor:pointer;
+    box-shadow:0 1vh 3vh rgba(0,0,0,.45);animation:bob 2.6s ease-in-out infinite;}
+  .wpp-pill svg{width:3vh;height:3vh;}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-1vh)}}
+  .saved-toast{position:absolute;bottom:7vh;left:50%;transform:translateX(-50%);z-index:2;display:none;
+    background:rgba(16,185,129,.96);color:#fff;font-size:2.4vh;font-weight:700;padding:1.8vh 3vh;border-radius:14px;}
+  .saved-toast.on{display:block;}
+  .idle-status{position:absolute;bottom:2vh;left:0;right:0;z-index:2;font-size:1.9vh;color:#94a3b8;display:flex;align-items:center;justify-content:center;gap:1.2vh;}
+  .dot{width:1.4vh;height:1.4vh;border-radius:50%;background:var(--verde);animation:pulse 1.3s infinite;}
+  @keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+  .hide{display:none!important;}
+
+  /* aprovado */
+  #approved{background:linear-gradient(160deg,var(--verde),var(--verde-esc));}
+  .check-wrap{width:22vh;height:22vh;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;animation:popin .5s cubic-bezier(.17,.89,.32,1.49);}
+  @keyframes popin{0%{transform:scale(0)}100%{transform:scale(1)}}
+  .check-svg{width:13vh;height:13vh;}
+  .check-svg path{stroke:#fff;stroke-width:9;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100;animation:draw .45s .25s forwards ease-out;}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .ap-title{color:#fff;font-size:5vh;font-weight:800;margin-top:3vh;opacity:0;animation:rise .4s .45s forwards;}
+  .ap-val{color:#d1fae5;font-size:3vh;margin-top:1vh;opacity:0;animation:rise .4s .6s forwards;}
+  @keyframes rise{from{opacity:0;transform:translateY(2vh)}to{opacity:1;transform:translateY(0)}}
+
+  /* cupom */
+  #cupom{background:#fff;color:#0f172a;justify-content:flex-start;padding:4vh 4vw 0;}
+  .cp-top{font-size:3vh;font-weight:800;color:var(--verde-esc);display:flex;align-items:center;gap:1.2vh;}
+  .cp-sub{font-size:1.9vh;color:#94a3b8;margin-top:.5vh;}
+  #qr{width:42vh;height:42vh;margin-top:2.5vh;border-radius:1.5vh;}
+  #qrReal{width:42vh;height:42vh;margin-top:2.5vh;border-radius:1.5vh;display:none;background:#fff;object-fit:contain;}
+  .qr-hint{font-size:2.4vh;font-weight:700;color:#0f172a;margin-top:1.5vh;}
+  .nfc{position:absolute;top:4vh;right:4vw;display:flex;flex-direction:column;align-items:center;gap:.6vh;}
+  .nfc-ring{position:relative;width:9vh;height:9vh;display:flex;align-items:center;justify-content:center;}
+  .nfc-ring svg{width:5vh;height:5vh;color:var(--verde-esc);z-index:2;}
+  .nfc-ring::before,.nfc-ring::after{content:"";position:absolute;inset:0;border:.4vh solid var(--verde);border-radius:50%;animation:ripple 1.8s infinite ease-out;}
+  .nfc-ring::after{animation-delay:.9s;}
+  @keyframes ripple{0%{transform:scale(.45);opacity:.9}100%{transform:scale(1.2);opacity:0}}
+  .nfc-txt{font-size:1.7vh;font-weight:700;color:#64748b;line-height:1.1;text-align:center;}
+  .send-wpp{position:absolute;bottom:4vh;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:1.4vh;
+    background:var(--wpp);color:#fff;font-size:2.8vh;font-weight:800;padding:2vh 5vh;border-radius:50px;cursor:pointer;box-shadow:0 1vh 3vh rgba(37,211,102,.4);}
+  .send-wpp svg{width:3.4vh;height:3.4vh;}
+  .send-wpp small{display:block;font-size:1.7vh;font-weight:600;opacity:.9;}
+  .auto-wpp{position:absolute;bottom:4vh;left:50%;transform:translateX(-50%);background:#dcfce7;color:var(--verde-esc);font-size:2.4vh;font-weight:700;padding:2vh 4vh;border-radius:50px;display:none;align-items:center;gap:1.2vh;}
+  .auto-wpp.on{display:flex;}
+  .countbar{position:absolute;top:0;left:0;height:.7vh;background:var(--verde);width:100%;}
+
+  /* teclado */
+  #wpp{background:#f8fafc;color:#0f172a;justify-content:flex-start;padding:4vh 4vw;}
+  .wpp-back{position:absolute;top:2.5vh;left:3vw;background:#e2e8f0;color:#0f172a;font-size:2.4vh;font-weight:800;padding:1.4vh 2.8vh;border-radius:12px;cursor:pointer;z-index:5;}
+  .wpp-back:active{background:#cbd5e1;}
+  .wpp-h{font-size:3vh;font-weight:800;display:flex;align-items:center;gap:1.4vh;}
+  .wpp-h svg{width:3.4vh;height:3.4vh;color:var(--wpp);}
+  .wpp-cb{font-size:2.2vh;color:var(--verde-esc);font-weight:700;margin-top:.5vh;}
+  .num-disp{margin-top:2vh;font-size:5vh;font-weight:800;letter-spacing:2px;color:#0f172a;height:6vh;font-variant-numeric:tabular-nums;}
+  .num-disp .ph{color:#cbd5e1;}
+  .keypad{margin-top:2vh;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5vh;width:min(52vh,80vw);}
+  .key{background:#fff;border:1px solid #e2e8f0;border-radius:1.5vh;font-size:4vh;font-weight:700;color:#0f172a;padding:1.6vh 0;cursor:pointer;}
+  .key:active{background:#e2e8f0;}
+  .key.ok{background:var(--wpp);color:#fff;border-color:var(--wpp);}
+  .key.del{color:#ef4444;}
+
+  /* enviado */
+  #sent{background:linear-gradient(160deg,var(--wpp),var(--wpp-esc));color:#fff;}
+  .sent-ic{font-size:12vh;animation:popin .5s cubic-bezier(.17,.89,.32,1.49);}
+  .sent-t{font-size:5vh;font-weight:800;margin-top:1vh;}
+  .sent-cb{margin-top:2.5vh;background:rgba(255,255,255,.18);border-radius:2vh;padding:2vh 4vh;font-size:2.8vh;font-weight:700;}
+  .sent-cb b{font-size:3.6vh;}
+
+  /* cliente voltando */
+  #back{background:radial-gradient(circle at 50% 40%,#0f2a23,#020617 72%);}
+  .back-h{color:#fff;font-size:4.4vh;font-weight:800;}
+  .back-sub{color:#94a3b8;font-size:2.6vh;margin-top:1vh;}
+  .nfc-big{position:relative;width:24vh;height:24vh;display:flex;align-items:center;justify-content:center;margin-top:4vh;}
+  .nfc-big svg{width:12vh;height:12vh;color:var(--verde-claro);z-index:2;}
+  .nfc-big::before,.nfc-big::after{content:"";position:absolute;inset:0;border:.5vh solid var(--verde);border-radius:50%;animation:ripple 1.8s infinite ease-out;}
+  .nfc-big::after{animation-delay:.9s;}
+  .back-tap{margin-top:4vh;font-size:2vh;color:#64748b;}
+  #backbal{background:linear-gradient(160deg,var(--verde),var(--verde-esc));color:#fff;}
+  .bb-hi{font-size:5vh;font-weight:800;}
+  .bb-box{margin-top:3vh;background:rgba(255,255,255,.16);border-radius:2.5vh;padding:2.5vh 6vh;}
+  .bb-lbl{font-size:2.4vh;color:#d1fae5;}
+  .bb-val{font-size:8vh;font-weight:800;line-height:1.05;}
+  .bb-msg{margin-top:3vh;font-size:2.6vh;color:#ecfdf5;max-width:60vw;line-height:1.35;}
+
+  .confetti{position:absolute;top:-2vh;width:1.6vh;height:2.4vh;opacity:.9;z-index:5;}
+
+  /* barra de controle do demo (discreta) */
+  .ctrl{position:fixed;bottom:1.4vh;right:1.4vw;z-index:30;display:flex;gap:1vh;opacity:.25;transition:opacity .2s;}
+  .ctrl:hover{opacity:1;}
+  .ctrl button{border:none;border-radius:1vh;font-size:1.7vh;font-weight:700;padding:1.2vh 1.8vh;cursor:pointer;background:#1e293b;color:#cbd5e1;}
+  .ctrl .go{background:var(--verde-esc);color:#fff;}
+
+  /* BOTÃO TELA CHEIA — grande e visível */
+  #fsBtn{position:fixed;top:1.5vh;left:50%;transform:translateX(-50%);z-index:9999;
+    background:#10b981;color:#fff;border:none;border-radius:14px;
+    font-size:2.4vh;font-weight:800;padding:1.6vh 3.4vh;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);letter-spacing:.5px;}
+  #fsBtn:active{background:#047857;}
+  #fsBtn.hide{display:none;}
+</style>
+</head>
+<body>
+  <button id="fsBtn">⛶ TELA CHEIA</button>
+  <div id="screen">
+    <!-- IDLE -->
+    <div class="scene active" id="idle">
+      <video class="ad-bg" id="adBg" muted playsinline preload="auto"></video>
+      <img class="brand-mark" src="tennessee-mark.png" alt="">
+      <div class="brand-card" id="brandCard"></div>
+      <div class="ad-tag">anúncio · espaço do açougue</div>
+      <div class="idle-logo">Zero<b>Bobina</b></div>
+      <div class="wpp-pill" id="cbCard">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.5A10 10 0 1012 2zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.7-.1-.4-.1-1-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.3.3-.1.5.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.7.8c.3.1.4.2.5.3 0 .1 0 .8-.2 1.4z"/></svg>
+        <span id="cbBtn">Cashback no WhatsApp</span>
+      </div>
+      <div class="saved-toast" id="saved">✓ WhatsApp salvo <b id="savedNum"></b> — pode pagar 👍</div>
+      <div class="idle-status"><span class="dot"></span> Aguardando pagamento…</div>
+    </div>
+
+    <!-- APROVADO -->
+    <div class="scene" id="approved">
+      <div class="check-wrap"><svg class="check-svg" viewBox="0 0 100 100"><path d="M20 52 L42 74 L80 28"/></svg></div>
+      <div class="ap-title">Pagamento aprovado</div>
+      <div class="ap-val">R$ 87,40 · Crédito</div>
+    </div>
+
+    <!-- CUPOM -->
+    <div class="scene" id="cupom">
+      <div class="cp-top">🧾 Cupom fiscal pronto</div>
+      <div class="cp-sub">NFC-e válida na SEFAZ — sem papel</div>
+      <div class="nfc"><div class="nfc-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 9a9 9 0 0114 0"/><path d="M7.5 12a5.5 5.5 0 019 0"/><path d="M10 15a2.5 2.5 0 014 0"/></svg></div><div class="nfc-txt">aproxime<br>o celular</div></div>
+      <canvas id="qr" width="300" height="300"></canvas>
+      <img id="qrReal" alt="">
+      <div class="qr-hint">Aponte a câmera do celular</div>
+      <div class="send-wpp" id="openWpp">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.5A10 10 0 1012 2zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.7-.1-.4-.1-1-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.3.3-.1.5.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.7.8c.3.1.4.2.5.3 0 .1 0 .8-.2 1.4z"/></svg>
+        <span>Receber no WhatsApp<small>+ ganhe cashback de volta</small></span>
+      </div>
+      <div class="auto-wpp" id="autoWpp">📲 Enviando cupom + cashback pro seu WhatsApp…</div>
+      <div class="countbar" id="countbar"></div>
+    </div>
+
+    <!-- TECLADO -->
+    <div class="scene" id="wpp">
+      <div class="wpp-back" id="wppBack">← Voltar</div>
+      <div class="wpp-h"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.5A10 10 0 1012 2zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.7-.1-.4-.1-1-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.3.3-.1.5.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.7.8c.3.1.4.2.5.3 0 .1 0 .8-.2 1.4z"/></svg> Digite seu WhatsApp</div>
+      <div class="wpp-cb">💸 cashback liberado pra próxima compra</div>
+      <div class="num-disp" id="disp"><span class="ph">(__) _____-____</span></div>
+      <div class="keypad" id="keypad"></div>
+    </div>
+
+    <!-- ENVIADO -->
+    <div class="scene" id="sent">
+      <div class="sent-ic">✅</div>
+      <div class="sent-t">Cupom enviado!</div>
+      <div class="sent-cb">💸 Cashback de <b>R$ 1,30</b><br>na sua próxima compra</div>
+    </div>
+
+    <!-- CLIENTE VOLTANDO -->
+    <div class="scene" id="back">
+      <div class="back-h">Já é cliente? 👋</div>
+      <div class="back-sub">Aproxime o celular pra ver seu cashback</div>
+      <div class="nfc-big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 9a9 9 0 0114 0"/><path d="M7.5 12a5.5 5.5 0 019 0"/><path d="M10 15a2.5 2.5 0 014 0"/></svg></div>
+      <div class="back-tap">(toque na tela pra simular o NFC)</div>
+    </div>
+
+    <!-- SALDO -->
+    <div class="scene" id="backbal">
+      <div class="bb-hi">Olá de novo! 🎉</div>
+      <div class="bb-box"><div class="bb-lbl">Seu cashback acumulado</div><div class="bb-val">R$ 3,90</div></div>
+      <div class="bb-msg">Use agora na sua compra — é só avisar o caixa 👍</div>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <button class="go" id="trigger">🖨️ Pagamento</button>
+    <button id="backBtn">👋 Cliente voltando</button>
+    <button id="reset">↺</button>
+  </div>
+
+<script>
+const S={idle:g('idle'),approved:g('approved'),cupom:g('cupom'),wpp:g('wpp'),sent:g('sent'),back:g('back'),backbal:g('backbal')};
+const countbar=g('countbar'),disp=g('disp'),saved=g('saved'),cbCard=g('cbCard'),savedNum=g('savedNum'),openWpp=g('openWpp'),autoWpp=g('autoWpp');
+let timers=[],numero='',numeroSalvo='',keypadCtx='idle';
+function g(i){return document.getElementById(i);}
+function clearTimers(){timers.forEach(t=>clearTimeout(t));timers=[];}
+function show(n){Object.values(S).forEach(s=>s.classList.remove('active'));S[n].classList.add('active');}
+function fmt(d){if(!d.length)return'';let o='('+d.slice(0,2);if(d.length>2)o+=') '+d.slice(2,7);if(d.length>7)o+='-'+d.slice(7,11);return o;}
+function chime(){try{const c=new (window.AudioContext||window.webkitAudioContext)();[660,880,1175].forEach((f,i)=>{const o=c.createOscillator(),gn=c.createGain();o.type='sine';o.frequency.value=f;o.connect(gn);gn.connect(c.destination);const t=c.currentTime+i*0.09;gn.gain.setValueAtTime(0.0001,t);gn.gain.exponentialRampToValueAtTime(0.22,t+0.02);gn.gain.exponentialRampToValueAtTime(0.0001,t+0.18);o.start(t);o.stop(t+0.2);});}catch(e){}}
+function confetti(host){const cor=['#34d399','#10b981','#a7f3d0','#fff','#fcd34d'];for(let i=0;i<34;i++){const c=document.createElement('div');c.className='confetti';c.style.background=cor[i%cor.length];c.style.left=(Math.random()*100)+'%';c.style.transform='rotate('+(Math.random()*360)+'deg)';host.appendChild(c);const d=1000+Math.random()*800,x=(Math.random()*160-80);c.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${x}px,110vh) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:d,easing:'cubic-bezier(.3,.7,.4,1)'});setTimeout(()=>c.remove(),d);}}
+function drawQR(){const cv=g('qr'),x=cv.getContext('2d'),n=25,s=cv.width/n;x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#0f172a';for(let b=0;b<n;b++)for(let a=0;a<n;a++){if(((a*7+b*13+a*b*3)%5)===0)x.fillRect(a*s,b*s,s,s);}const fp=(px,py)=>{x.fillStyle='#0f172a';x.fillRect(px*s,py*s,7*s,7*s);x.fillStyle='#fff';x.fillRect((px+1)*s,(py+1)*s,5*s,5*s);x.fillStyle='#0f172a';x.fillRect((px+2)*s,(py+2)*s,3*s,3*s);};fp(0,0);fp(n-7,0);fp(0,n-7);}
+function buildKeypad(){const kp=g('keypad'),ks=['1','2','3','4','5','6','7','8','9','⌫','0','OK'];ks.forEach(k=>{const b=document.createElement('div');b.className='key';b.textContent=k;if(k==='OK'){b.classList.add('ok');b.onclick=okNumero;}else if(k==='⌫'){b.classList.add('del');b.onclick=()=>{numero=numero.slice(0,-1);renderNum();};}else b.onclick=()=>{if(numero.length<11){numero+=k;renderNum();}};kp.appendChild(b);});}
+function renderNum(){disp.innerHTML=numero.length?fmt(numero):'<span class="ph">(__) _____-____</span>';}
+function enviarWhats(num){if(!num)return;fetch('/api/whatsapp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:'55'+num,cupom:cupomURL})}).then(r=>r.json()).then(j=>{if(!j.ok)console.warn('WhatsApp:',j);}).catch(()=>{});}
+function okNumero(){if(numero.length<10)return;if(keypadCtx==='idle'){numeroSalvo=numero;savedNum.textContent=fmt(numero);cbCard.classList.add('hide');saved.classList.add('on');show('idle');}else{enviarWhats(numero);enviado();}}
+function enviado(){clearTimers();show('sent');chime();confetti(S.sent);timers.push(setTimeout(reset,4800));}
+function start(){clearTimers();
+  const qc=g('qr'),qi=g('qrReal'),apv=S.approved.querySelector('.ap-val');
+  if(pendingQR){qi.src=pendingQR;qi.style.display='block';qc.style.display='none';}   // QR REAL do cupom
+  else{drawQR();qi.style.display='none';qc.style.display='block';}                     // QR de demonstração
+  apv.textContent=pendingVal||AP_DEF;
+  show('approved');chime();confetti(S.approved);S.approved.querySelectorAll('.check-wrap,.ap-title,.ap-val,.check-svg path').forEach(el=>{el.style.animation='none';el.offsetHeight;el.style.animation='';});
+  timers.push(setTimeout(()=>{show('cupom');if(numeroSalvo){enviarWhats(numeroSalvo);openWpp.classList.add('hide');autoWpp.classList.add('on');timers.push(setTimeout(enviado,2600));}else{openWpp.classList.remove('hide');autoWpp.classList.remove('on');}countbar.style.transition='none';countbar.style.width='100%';countbar.offsetHeight;countbar.style.transition='width 45s linear';countbar.style.width='0%';},2200));
+  timers.push(setTimeout(reset,2200+45000));}   // cupom fica 45s na tela pra dar tempo de escanear
+function reset(){clearTimers();pendingQR=null;pendingVal=null;numero='';numeroSalvo='';renderNum();cbCard.classList.remove('hide');saved.classList.remove('on');openWpp.classList.remove('hide');autoWpp.classList.remove('on');show('idle');}
+function voltar(){clearTimers();show('back');}
+function saldo(){clearTimers();show('backbal');chime();confetti(S.backbal);timers.push(setTimeout(reset,5200));}
+
+g('trigger').onclick=(e)=>{e.stopPropagation();start();};
+g('backBtn').onclick=(e)=>{e.stopPropagation();voltar();};
+g('reset').onclick=(e)=>{e.stopPropagation();reset();};
+cbCard.onclick=(e)=>{e.stopPropagation();keypadCtx='idle';numero='';renderNum();show('wpp');};
+openWpp.onclick=(e)=>{e.stopPropagation();keypadCtx='cupom';numero='';renderNum();show('wpp');};
+g('wppBack').onclick=(e)=>{e.stopPropagation();if(keypadCtx==='idle')reset();else show('cupom');};
+g('screen').onclick=()=>{if(S.idle.classList.contains('active'))start();else if(S.back.classList.contains('active'))saldo();};
+
+// Marca Tennessee segura 3s na transição, depois entra o próximo vídeo (versão aprovada).
+function startAds(){const v=g('adBg'),card=g('brandCard'),lista=['ad1t.mp4','ad2t.mp4','ad3t.mp4','ad4t.mp4','ad5t.mp4','ad6t.mp4','ad1.mp4','ad2.mp4','ad3.mp4'];let i=0,busy=false;
+  function play(){busy=true;card.classList.add('show');v.classList.remove('on');   // marca Tennessee cobre a tela
+    v.src=lista[i];v.load();let ready=false;
+    v.oncanplay=()=>{v.oncanplay=null;ready=true;};
+    function reveal(){const p=v.play();if(p&&p.catch)p.catch(()=>{});v.classList.add('on'); // toca o vídeo do início
+      setTimeout(()=>{card.classList.remove('show');busy=false;},450);}            // marca some por cima
+    setTimeout(()=>{ if(ready)reveal(); else v.addEventListener('canplay',reveal,{once:true}); },3000); // segura a logo 3s
+  }
+  function adv(){if(busy)return;i=(i+1)%lista.length;play();}
+  v.addEventListener('ended',adv);   // só troca quando o vídeo TERMINA
+  v.addEventListener('error',adv);   // se um vídeo falhar, pula pro próximo
+  play();
+}
+setTimeout(startAds,1200);
+
+// ---- TELA CHEIA ----
+const fsBtn=g('fsBtn');
+function isFS(){return document.fullscreenElement||document.webkitFullscreenElement;}
+function enterFS(){const el=document.documentElement;const r=el.requestFullscreen||el.webkitRequestFullscreen;if(r&&!isFS()){try{const p=r.call(el);if(p&&p.catch)p.catch(()=>{});}catch(e){}}}
+function syncFsBtn(){if(isFS())fsBtn.classList.add('hide');else fsBtn.classList.remove('hide');}
+fsBtn.onclick=(e)=>{e.stopPropagation();enterFS();setTimeout(syncFsBtn,300);};
+document.addEventListener('fullscreenchange',syncFsBtn);
+document.addEventListener('webkitfullscreenchange',syncFsBtn);
+syncFsBtn();
+// ===== ESCUTA O PC: quando um cupom é disparado, mostra na telinha com QR REAL =====
+let lastSeq=-1,pendingQR=null,pendingVal=null,cupomURL='';
+const AP_DEF=S.approved.querySelector('.ap-val').textContent;
+async function poll(){try{
+  const j=await (await fetch('/api/last',{cache:'no-store'})).json();
+  if(lastSeq===-1){lastSeq=j.seq;return;}                 // 1ª leitura: só sincroniza, não dispara
+  if(j.seq>lastSeq){lastSeq=j.seq;
+    const c=await (await fetch('/api/cupom?id='+j.seq,{cache:'no-store'})).json();
+    pendingQR='/api/qr?id='+j.seq;
+    cupomURL=location.origin+'/cupom.html?id='+j.seq;
+    const v=Number(c.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    pendingVal='R$ '+v+(c.forma?(' · '+c.forma):'');
+    start();
+  }
+}catch(e){}}
+setInterval(poll,1500);
+
+buildKeypad();drawQR();renderNum();
+
+/* ===== MODO LIMPO (apresentação): tablet.html#clean — só a tela, sem botões, auto-loop ===== */
+(function(){if((location.hash+location.search).indexOf('clean')<0)return;
+  var st=document.createElement('style');
+  st.textContent='.ctrl,#fsBtn,h1,.sub{display:none!important}'
+    +'html,body{overflow:hidden!important;background:transparent!important;display:flex;align-items:center;justify-content:center;min-height:100%;padding:0;margin:0}';
+  document.head.appendChild(st);
+  /* sem auto-pagamento: fica na propaganda; clicar na tela dá o "pagamento aprovado" (manual) */
+})();
+</script>
+</body>
+</html>
