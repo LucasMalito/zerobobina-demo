@@ -165,14 +165,12 @@
             <img src="img-telinha.png" alt="telinha">
             <div class="in">Telinha (pequena)</div>
             <div class="ip">R$ <span id="pT">990</span>/caixa</div>
-            <div class="ic">custo R$ <span id="cT">250</span> · margem <b id="mT">R$ 740</b></div>
             <div class="it"><span id="iCx">4</span> caixas = <b id="iTel">R$ 3.960</b></div>
           </div>
           <div class="impcard">
             <img src="img-tablet.png" alt="tablet">
             <div class="in">Tablet (premium)</div>
             <div class="ip">R$ <span id="pB">2.000</span>/caixa</div>
-            <div class="ic">custo R$ <span id="cB">1.000</span> · margem <b id="mB">R$ 1.000</b></div>
             <div class="it"><span id="iCx2">4</span> caixas = <b id="iTab">R$ 8.000</b></div>
           </div>
         </div>
@@ -198,8 +196,7 @@
   const PRECO_MIDIA=19.9;   // add-on de mídia (IA gera anúncio) R$/caixa/mês
   const IMPL_TELINHA=990;   // R$/caixa equipamento telinha
   const IMPL_TABLET=2000;   // R$/caixa equipamento tablet (venda)
-  const CUSTO_TELINHA=250;  // custo nosso da telinha
-  const CUSTO_TABLET=1000;  // custo nosso do tablet
+  // (custos internos removidos da versão publicada)
   const PCT=0.90;           // 90% da bobina economizada
 
   const $=id=>document.getElementById(id);
@@ -240,8 +237,6 @@
     $('iCx').textContent=cx; $('iCx2').textContent=cx;
     $('iTel').textContent='R$ '+fmt(cx*IMPL_TELINHA); $('iTab').textContent='R$ '+fmt(cx*IMPL_TABLET);
     $('pT').textContent=fmt(IMPL_TELINHA); $('pB').textContent=fmt(IMPL_TABLET);
-    $('cT').textContent=fmt(CUSTO_TELINHA); $('mT').textContent='R$ '+fmt(IMPL_TELINHA-CUSTO_TELINHA);
-    $('cB').textContent=fmt(CUSTO_TABLET); $('mB').textContent='R$ '+fmt(IMPL_TABLET-CUSTO_TABLET);
   }
   function start(){ $('intro').style.display='none'; started=true; next=0; v.currentTime=0; v.play().catch(()=>{}); $('navmenu').classList.add('on'); }
   function restart(){ hideLayer(); next=0; start(); }
