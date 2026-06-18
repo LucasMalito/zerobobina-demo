@@ -137,7 +137,6 @@
 </style>
 </head>
 <body>
-  <button id="fsBtn">⛶ TELA CHEIA</button>
   <div id="screen">
     <!-- IDLE -->
     <div class="scene active" id="idle">
@@ -209,11 +208,6 @@
     </div>
   </div>
 
-  <div class="ctrl">
-    <button class="go" id="trigger">🖨️ Pagamento</button>
-    <button id="backBtn">👋 Cliente voltando</button>
-    <button id="reset">↺</button>
-  </div>
 
 <script>
 const S={idle:g('idle'),approved:g('approved'),cupom:g('cupom'),wpp:g('wpp'),sent:g('sent'),back:g('back'),backbal:g('backbal')};
@@ -243,9 +237,7 @@ function reset(){clearTimers();pendingQR=null;pendingVal=null;numero='';numeroSa
 function voltar(){clearTimers();show('back');}
 function saldo(){clearTimers();show('backbal');chime();confetti(S.backbal);timers.push(setTimeout(reset,5200));}
 
-g('trigger').onclick=(e)=>{e.stopPropagation();start();};
-g('backBtn').onclick=(e)=>{e.stopPropagation();voltar();};
-g('reset').onclick=(e)=>{e.stopPropagation();reset();};
+// painel de controle removido — disparo vem do PC (emitir.html); toque na tela é fallback
 cbCard.onclick=(e)=>{e.stopPropagation();keypadCtx='idle';numero='';renderNum();show('wpp');};
 openWpp.onclick=(e)=>{e.stopPropagation();keypadCtx='cupom';numero='';renderNum();show('wpp');};
 g('wppBack').onclick=(e)=>{e.stopPropagation();if(keypadCtx==='idle')reset();else show('cupom');};
@@ -267,15 +259,7 @@ function startAds(){const v=g('adBg'),card=g('brandCard'),lista=['ad1t.mp4','ad2
 }
 setTimeout(startAds,1200);
 
-// ---- TELA CHEIA ----
-const fsBtn=g('fsBtn');
-function isFS(){return document.fullscreenElement||document.webkitFullscreenElement;}
-function enterFS(){const el=document.documentElement;const r=el.requestFullscreen||el.webkitRequestFullscreen;if(r&&!isFS()){try{const p=r.call(el);if(p&&p.catch)p.catch(()=>{});}catch(e){}}}
-function syncFsBtn(){if(isFS())fsBtn.classList.add('hide');else fsBtn.classList.remove('hide');}
-fsBtn.onclick=(e)=>{e.stopPropagation();enterFS();setTimeout(syncFsBtn,300);};
-document.addEventListener('fullscreenchange',syncFsBtn);
-document.addEventListener('webkitfullscreenchange',syncFsBtn);
-syncFsBtn();
+// (botão de tela cheia removido — usar "Adicionar à Tela de Início" no iPad)
 // ===== ESCUTA O PC: quando um cupom é disparado, mostra na telinha com QR REAL =====
 let lastSeq=-1,pendingQR=null,pendingVal=null,cupomURL='';
 const AP_DEF=S.approved.querySelector('.ap-val').textContent;
